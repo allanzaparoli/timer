@@ -1,13 +1,23 @@
+import { useState } from "react";
 import { Play } from "phosphor-react";
 import { CountdownContainer, FormContainer, HomeContainer, MinutesAmountInput, Separator, StartButton, TaskInput } from "./styles";
 
 export function Home() {
+
+  const [task, setTask] = useState('');
+
   return (
     <HomeContainer>
       <form>
         <FormContainer>
           <label htmlFor="">Vou Trabalhar em</label>
-          <TaskInput id="task" list="task-suggestions" placeholder="Dê um nome para o seu projeto" />
+          <TaskInput
+            id="task"
+            list="task-suggestions"
+            placeholder="Dê um nome para o seu projeto"
+            onChange={e => setTask(e.target.value)}
+            value={task}
+          />
 
           <datalist id="task-suggestions">
             <option value="Projeto 1" />
@@ -34,7 +44,7 @@ export function Home() {
           <span>0</span>
         </CountdownContainer>
 
-        <StartButton disabled type="submit">
+        <StartButton disabled={!task} type="submit">
           <Play size={24} />
           Começar
         </StartButton>
