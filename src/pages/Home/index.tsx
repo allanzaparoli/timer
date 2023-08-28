@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
-import { differenceInSeconds } from 'date-fns';
+import { differenceInSeconds, set } from 'date-fns';
 
 import {
   CountdownContainer,
@@ -45,11 +45,21 @@ export function Home() {
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
   useEffect(() => {
+
+    let interval: NodeJS.Timeout;
+
     if (activeCycle) {
-      setInterval(() => {
-        setAmountSecondsPassed(differenceInSeconds(new Date(), activeCycle.startDate))
+      interval = setInterval(() => {
+        setAmountSecondsPassed(
+          differenceInSeconds(new Date(), activeCycle.startDate)
+        )
       }, 1000)
     }
+
+    return () => {
+      clearInterval(interval);
+    }
+
   }, [activeCycle])
 
   function handleCreateNewCycle(data: NewCycleFormData) {
@@ -64,6 +74,7 @@ export function Home() {
 
     setCycles((state) => [...state, newCycle]);
     setActiveCycleId(id);
+    setAmountSecondsPassed(0);
     reset();
   }
 
@@ -76,6 +87,12 @@ export function Home() {
 
   const minutes = String(minutesAmount).padStart(2, '0');
   const seconds = String(secondsAmount).padStart(2, '0');
+
+  useEffect(() => {
+    if (activeCycle) {
+    document.title = `${minutes}:${seconds} | Zapa_Timer`
+    }
+  }, [activeCycle, minutes, seconds])
 
   const task = watch('task');
   const isSubmitDisabled = !task;
