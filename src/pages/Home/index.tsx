@@ -28,6 +28,8 @@ interface Cycle {
   task: string;
   minutesAmount: number;
   startDate: Date;
+  interruptedDate?: Date;
+  finishedDate?: Date;
 }
 
 export function Home() {
@@ -36,14 +38,11 @@ export function Home() {
   const [amountSecondsPassed, setAmountSecondsPassed] = useState(0);
 
   const { register, handleSubmit, watch, reset } = useForm<NewCycleFormData>({
-    resolver: zodResolver(newCycleFormValidationSchema),
-    defaultValues: {
-      task: '',
-      minutesAmount: 0,
-    },
   });
 
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
+
+  const totalSeconds = activeCycle? activeCycle.minutesAmount * 60 : 0
 
   useEffect(() => {
 
@@ -51,9 +50,27 @@ export function Home() {
 
     if (activeCycle) {
       interval = setInterval(() => {
-        setAmountSecondsPassed(
-          differenceInSeconds(new Date(), activeCycle.startDate)
+        const secondDifference = differenceInSeconds (
+          new Date(),
+          activeCycle.startDate,
         )
+        
+        if (secondDifference >= totalSeconds) {
+          setCycles((state) => 
+            state.map((cycle) => {
+              if (cycle.id === activeCycleId) {
+                return { ...cycle, finishedDate: new Date() }
+              } else {
+                return cycle
+              }
+            })
+          )
+
+            setAmountSecondsPassed(totalSeconds);
+            clearInterval(interval);
+        } else {
+          setAmountSecondsPassed(secondDifference);
+        }
       }, 1000)
     }
 
@@ -61,26 +78,21 @@ export function Home() {
       clearInterval(interval);
     }
 
-  }, [activeCycle])
+  }, [activeCycle, totalSeconds, activeCycleId, cycles])
 
   function handleCreateNewCycle(data: NewCycleFormData) {
-    const id = String(new Date().getTime());
-
-    const newCycle: Cycle = {
-      id,
-      task: data.task,
-      minutesAmount: data.minutesAmount,
-      startDate: new Date(),
-    }
-
-    setCycles((state) => [...state, newCycle]);
-    setActiveCycleId(id);
-    setAmountSecondsPassed(0);
-    reset();
+    setCycles((state) =>
+      state.map((cycle) => {
+        if (cycle.id === activeCycleId) {
+          return { ...cycle, interruptedDate: new Date() }
+        } else {
+          return cycle
+        }
+      }),
+    );
+    setActiveCycleId(null);
   }
 
-
-  const totalSeconds = activeCycle? activeCycle.minutesAmount * 60 : 0
   const currentSeconds = activeCycle? totalSeconds - amountSecondsPassed : 0
 
   const minutesAmount = Math.floor(currentSeconds / 60);
@@ -107,6 +119,7 @@ export function Home() {
             id="task"
             list="task-suggestions"
             placeholder="Dê um nome para o seu projeto"
+            disabled={!!activeCycleId}
             {...register('task')}
           />
 
@@ -125,6 +138,7 @@ export function Home() {
           step={5}
           min={5}
           max={60}
+          disabled={!!activeCycleId}
           {...register('minutesAmount', { valueAsNumber: true })}
           />
 
