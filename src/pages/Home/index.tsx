@@ -57,6 +57,7 @@ export function Home() {
 
   function setSecondsPassed(seconds: number) {
     setAmountSecondsPassed(seconds);
+  }
 
   function markCurrentCycleAsFinished() {
     setCycles((state) =>
@@ -133,5 +134,4 @@ export function Home() {
       </form>
     </HomeContainer>
   )
-}
 }
